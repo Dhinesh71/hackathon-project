@@ -5,6 +5,8 @@
   "description": "Full-stack smart bus tracking system with real-time GPS and ETA",
   "scripts": {
     "dev": "vite",
+    "build": "vite build",
+    "vercel-build": "vite build",
     "start": "concurrently \"npm run start --prefix backend\" \"npm run dev --prefix frontend\"",
     "backend": "npm run start --prefix backend",
     "frontend": "npm run dev --prefix frontend",
