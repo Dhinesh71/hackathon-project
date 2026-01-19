@@ -2,31 +2,31 @@ START
   |
 User sends message
   |
-Store message in Short-Term Memory (last 5 messages)
+Store User message in Short-Term Memory (STM) database
   |
-Is message count = 5?
+Load Context Sources:
+  1. Global Long-Term Memory (Summaries from other sessions)
+  2. Global Recent Activity (Last 10 messages from other sessions)
+  3. Current Session Long-Term Memory
+  4. Current Session Short-Term Memory
   |
-  |-- YES --> Summarize important points
-  |            |
-  |            Save summary in Long-Term Memory (notes)
-  |            |
-  |            Clear old messages
+Build System Prompt (Inject ALL loaded context)
   |
-  |-- NO --> Skip summarizing
+AI generates response (Gemini 2.5 Flash)
   |
-Check user message:
-Does user ask about past?
-(words like: earlier / before / remember)
-  |
-  |-- YES --> Send:
-  |           - Recent messages
-  |           - Important notes (Long-Term Memory)
-  |
-  |-- NO --> Send:
-              - Recent messages only
-  |
-AI generates response
+Store AI response in Short-Term Memory (STM) database
   |
 Show response to user
+  |
+Check Short-Term Memory size:
+Is STM count >= 10 messages? (5 exchanges)
+  |
+  |-- YES --> Summarize STM contents (extract facts/decisions)
+  |            |
+  |            Save summary to Long-Term Memory (LTM) database
+  |            |
+  |            Clear Short-Term Memory (STM) database
+  |
+  |-- NO --> Continue
   |
 END

@@ -90,8 +90,12 @@ A smart memory management system that:
 ### Memory Flow
 
 ```
-User Message → Save to STM (DB) → Build AI Prompt → Get AI Response 
-→ Save AI Reply to STM (DB) → Check if STM >= 10 messages
+User Message → Save to STM (DB) 
+→ Load Global Context (Cross-Session LTM/STM) 
+→ Build AI Prompt (Global + Local Context) 
+→ Get AI Response 
+→ Save AI Reply to STM (DB) 
+→ Check if STM >= 10 messages
 → YES: Summarize → Save to LTM → Clear STM
 → NO: Return Response
 ```
