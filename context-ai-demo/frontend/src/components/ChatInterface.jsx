@@ -22,7 +22,7 @@ const ChatInterface = ({ messages, onSendMessage, loading }) => {
 
     return (
         <div className="main-chat-area">
-            <header style={{ padding: '20px', textAlign: 'center', borderBottom: '1px solid var(--glass-border)' }}>
+            <header style={{ height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--glass-border)' }}>
                 <h1 className="text-neon" style={{ margin: 0, fontSize: '1.5rem', letterSpacing: '2px' }}>
                     CONTEXT AI <span className="text-gradient">SYSTEM</span>
                 </h1>
@@ -44,10 +44,10 @@ const ChatInterface = ({ messages, onSendMessage, loading }) => {
                         display: 'flex',
                         flexDirection: 'column'
                     }}>
-                        <div style={{ 
-                            fontSize: '0.7rem', 
-                            marginBottom: '4px', 
-                            color: 'var(--text-dim)', 
+                        <div style={{
+                            fontSize: '0.7rem',
+                            marginBottom: '4px',
+                            color: 'var(--text-dim)',
                             textAlign: msg.role === 'user' ? 'right' : 'left',
                             padding: '0 5px'
                         }}>
@@ -75,10 +75,10 @@ const ChatInterface = ({ messages, onSendMessage, loading }) => {
                         onChange={(e) => setInput(e.target.value)}
                         placeholder="Enter command or query..."
                         className="glass-panel"
-                        style={{ 
-                            flex: 1, 
-                            padding: '14px 20px', 
-                            color: '#fff', 
+                        style={{
+                            flex: 1,
+                            padding: '14px 20px',
+                            color: '#fff',
                             border: '1px solid var(--glass-border)',
                             outline: 'none',
                             fontSize: '1rem'

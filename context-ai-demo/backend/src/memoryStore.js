@@ -148,10 +148,93 @@ const updateMessageCount = async (sessionId, count) => {
   }
 };
 
+// Get all sessions for sidebar
+const getAllSessions = async () => {
+  try {
+    const { data: sessions, error } = await supabase
+      .from('sessions')
+      .select(`
+        *,
+        stm_messages (content, created_at),
+        ltm_memories (memory_text, created_at)
+      `)
+      .order('updated_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching sessions:', error);
+      throw error;
+    }
+
+    // Generate titles and clean up result
+    return sessions.map(session => {
+      let title = "New Chat";
+
+      // Sorting to find the "first" content
+      const stm = session.stm_messages?.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)) || [];
+      const ltm = session.ltm_memories?.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)) || [];
+
+      // Prefer first user message from STM, else first LTM summary
+      // Note: We might want to filter stm by role='user' but we didn't fetch role. 
+      // Let's assume content is enough.
+
+      if (stm.length > 0) {
+        title = stm[0].content;
+      } else if (ltm.length > 0) {
+        title = ltm[0].memory_text;
+      }
+
+      // Truncate
+      if (title.length > 30) title = title.substring(0, 30) + "...";
+
+      return {
+        id: session.id,
+        created_at: session.created_at,
+        updated_at: session.updated_at,
+        message_count: session.message_count,
+        title: title
+      };
+    });
+  } catch (error) {
+    console.error('getAllSessions error:', error);
+    throw error;
+  }
+};
+
+// Get all LTM memories AND recent STM from other sessions
+const getGlobalContext = async () => {
+  try {
+    // 1. Fetch all LTM
+    const { data: ltm, error: ltmError } = await supabase
+      .from('ltm_memories')
+      .select('session_id, memory_text');
+
+    if (ltmError) throw ltmError;
+
+    // 2. Fetch recent STM (last 10 messages from other sessions)
+    // We can't efficiently filter "other sessions" in one query without a session ID argument, 
+    // but we can filter later. For now, let's fetch ALL recent STM and filter in code.
+    // Or better, just fetch the last 50 messages globally.
+    const { data: stm, error: stmError } = await supabase
+      .from('stm_messages')
+      .select('session_id, role, content, created_at')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (stmError) throw stmError;
+
+    return { ltm, stm };
+  } catch (error) {
+    console.error('getGlobalContext error:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   getSession,
   saveToSTM,
   saveToLTM,
   clearSTM,
-  updateMessageCount
+  updateMessageCount,
+  getAllSessions,
+  getGlobalContext
 };

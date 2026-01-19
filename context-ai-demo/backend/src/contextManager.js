@@ -1,4 +1,4 @@
-const { getSession, saveToSTM, saveToLTM, clearSTM, updateMessageCount } = require('./memoryStore');
+const { getSession, saveToSTM, saveToLTM, clearSTM, updateMessageCount, getGlobalContext } = require('./memoryStore');
 const { summarizeBatch } = require('./summarizer');
 const model = require('./geminiClient');
 
@@ -27,21 +27,51 @@ const handleMessage = async (sessionId, userMessage) => {
         let ltmContext = [];
 
         // 3. Determine Context for Prompt
+        // 3. Determine Context for Prompt
+        // Fetch global context (LTM + recent STM from other sessions)
+        const globalContext = await getGlobalContext();
+
+        // Filter LTM for other sessions
+        const backgroundLTM = globalContext.ltm
+            .filter(m => m.session_id !== sessionId)
+            .map(m => m.memory_text);
+
+        // Filter recent STM for other sessions
+        const backgroundSTM = globalContext.stm
+            .filter(m => m.session_id !== sessionId)
+            .map(m => `[${new Date(m.created_at).toLocaleString()}] ${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`);
+
+        // This session's LTM is already in session.ltm (array of strings)
+        const currentSessionLTM = session.ltm;
+
         if (isRecallNeeded) {
-            ltmContext = session.ltm;
             console.log(`[Context] Recall triggered for session ${sessionId}`);
         }
 
         // 4. Build Prompt
         const finalPromptContent = `You are an intelligent AI assistant with memory management capabilities.
 
-${ltmContext.length > 0 ? `PREVIOUS CONVERSATION SUMMARY:\n${ltmContext.map(b => `• ${b}`).join('\n')}\n\n` : ''}${session.stm.length > 0 ? `RECENT MESSAGES:\n${session.stm.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n')}\n\n` : ''}CURRENT QUESTION:
+BACKGROUND KNOWLEDGE (Summarized LTM from Past Sessions):
+${backgroundLTM.length > 0 ? backgroundLTM.map(b => `• ${b}`).join('\n') : '(No prior summarized knowledge)'}
+
+RECENT ACTIVITY (Raw Messages from Other Sessions):
+${backgroundSTM.length > 0 ? backgroundSTM.slice(0, 15).join('\n') : '(No recent activity in other sessions)'}
+
+CURRENT SESSION CONTEXT (Long-Term Memory):
+${currentSessionLTM.length > 0 ? currentSessionLTM.map(b => `• ${b}`).join('\n') : '(No long-term memories for this session yet)'}
+
+RECENT MESSAGES (Short-Term Memory):
+${session.stm.length > 0 ? session.stm.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n') : '(No recent messages)'}
+
+CURRENT QUESTION:
 ${userMessage}
 
 INSTRUCTIONS:
-- If the question relates to our conversation history, use the context above
-- For general knowledge questions, provide helpful, accurate information
-- Be concise, friendly, and direct`;
+- You have access to "BACKGROUND KNOWLEDGE" (summarized facts) and "RECENT ACTIVITY" (raw messages) from other sessions.
+- Use these to understand the user's history, identity, and recent work, even if it wasn't in the current session.
+- If the user asks "What was I doing?" or "What is my name?", check RECENT ACTIVITY and BACKGROUND KNOWLEDGE.
+- Use "CURRENT SESSION CONTEXT" and "RECENT MESSAGES" to maintain continuity in the current conversation.
+- Be concise, friendly, and direct.`;
 
         // 5. Call Gemini for Answer
         let aiResponseText = "";

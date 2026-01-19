@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { handleMessage } = require('./src/contextManager');
-const { getSession } = require('./src/memoryStore');
+const { getSession, getAllSessions } = require('./src/memoryStore');
 require('dotenv').config();
 
 const app = express();
@@ -13,6 +13,29 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+
+// Get all sessions for sidebar
+app.get('/sessions', async (req, res) => {
+    try {
+        const sessions = await getAllSessions();
+        res.json(sessions);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+// Get specific session details (STM + LTM)
+app.get('/sessions/:sessionId', async (req, res) => {
+    const { sessionId } = req.params;
+    try {
+        const session = await getSession(sessionId);
+        res.json(session);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
 
 app.post('/chat', async (req, res) => {
     const { message, sessionId } = req.body;
