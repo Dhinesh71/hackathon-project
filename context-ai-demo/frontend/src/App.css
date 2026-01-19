@@ -1,0 +1,84 @@
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  border-radius: 16px;
+}
+
+/* Typography */
+.text-neon {
+  color: var(--primary-neon);
+  text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+}
+
+.text-gradient {
+  background: linear-gradient(to right, var(--primary-neon), var(--secondary-neon));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Buttons */
+.btn-neon {
+  background: rgba(0, 243, 255, 0.1);
+  border: 1px solid var(--primary-neon);
+  color: var(--primary-neon);
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.btn-neon:hover:not(:disabled) {
+  background: var(--primary-neon);
+  color: #000;
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
+}
+
+.btn-neon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #555;
+  color: #888;
+}
+
+/* Chat Bubbles */
+.msg-user {
+  background: linear-gradient(135deg, rgba(0, 243, 255, 0.2), rgba(0, 243, 255, 0.05));
+  border: 1px solid rgba(0, 243, 255, 0.3);
+  color: #fff;
+  border-radius: 12px 12px 0 12px;
+}
+
+.msg-ai {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e0e0e0;
+  border-radius: 12px 12px 12px 0;
+}
+
+/* Layout */
+.app-container {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.main-chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.debug-sidebar {
+  width: 320px;
+  border-left: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.2);
+}
