@@ -54,8 +54,8 @@ INSTRUCTIONS:
             }
             aiResponseText = response.text();
         } catch (e) {
-            console.error("Gemini Error", e);
-            aiResponseText = "Sorry, I encountered an error processing your request.";
+            console.error("Gemini Error:", e);
+            aiResponseText = `Gemini Error: ${e.message || "Unknown error"}`;
         }
 
         // 6. Save AI response to STM in Supabase
