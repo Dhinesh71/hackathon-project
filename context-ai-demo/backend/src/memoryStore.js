@@ -1,17 +1,17 @@
 const supabase = require('./supabaseClient');
 
-// Get or create a session
-const getSession = async (sessionId) => {
+// Get or create a session for a specific user
+const getSession = async (sessionId, userId) => {
   try {
-    // Check if session exists
+    // Check if session exists and belongs to user
     const { data: existingSession, error: fetchError } = await supabase
       .from('sessions')
       .select('*')
       .eq('id', sessionId)
-      .single();
+      .eq('user_id', userId)
+      .maybeSingle();
 
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      // PGRST116 = no rows returned
+    if (fetchError) {
       console.error('Error fetching session:', fetchError);
       throw fetchError;
     }
@@ -22,24 +22,20 @@ const getSession = async (sessionId) => {
         .from('stm_messages')
         .select('*')
         .eq('session_id', sessionId)
+        .eq('user_id', userId) // Security check
         .order('created_at', { ascending: true });
 
-      if (stmError) {
-        console.error('Error fetching STM:', stmError);
-        throw stmError;
-      }
+      if (stmError) throw stmError;
 
       // Load LTM memories
       const { data: ltmMemories, error: ltmError } = await supabase
         .from('ltm_memories')
         .select('*')
         .eq('session_id', sessionId)
+        .eq('user_id', userId) // Security check
         .order('created_at', { ascending: true });
 
-      if (ltmError) {
-        console.error('Error fetching LTM:', ltmError);
-        throw ltmError;
-      }
+      if (ltmError) throw ltmError;
 
       return {
         id: existingSession.id,
@@ -52,7 +48,7 @@ const getSession = async (sessionId) => {
     // Create new session if it doesn't exist
     const { data: newSession, error: createError } = await supabase
       .from('sessions')
-      .insert([{ id: sessionId, message_count: 0 }])
+      .insert([{ id: sessionId, user_id: userId, message_count: 0 }])
       .select()
       .single();
 
@@ -74,11 +70,11 @@ const getSession = async (sessionId) => {
 };
 
 // Save a message to STM
-const saveToSTM = async (sessionId, role, content) => {
+const saveToSTM = async (sessionId, userId, role, content) => {
   try {
     const { error } = await supabase
       .from('stm_messages')
-      .insert([{ session_id: sessionId, role, content }]);
+      .insert([{ session_id: sessionId, user_id: userId, role, content }]);
 
     if (error) {
       console.error('Error saving to STM:', error);
@@ -91,10 +87,11 @@ const saveToSTM = async (sessionId, role, content) => {
 };
 
 // Save memories to LTM
-const saveToLTM = async (sessionId, memories) => {
+const saveToLTM = async (sessionId, userId, memories) => {
   try {
     const memoriesToInsert = memories.map(memory => ({
       session_id: sessionId,
+      user_id: userId,
       memory_text: memory
     }));
 
@@ -113,12 +110,13 @@ const saveToLTM = async (sessionId, memories) => {
 };
 
 // Clear STM after summarization
-const clearSTM = async (sessionId) => {
+const clearSTM = async (sessionId, userId) => {
   try {
     const { error } = await supabase
       .from('stm_messages')
       .delete()
-      .eq('session_id', sessionId);
+      .eq('session_id', sessionId)
+      .eq('user_id', userId);
 
     if (error) {
       console.error('Error clearing STM:', error);
@@ -131,12 +129,13 @@ const clearSTM = async (sessionId) => {
 };
 
 // Update session message count
-const updateMessageCount = async (sessionId, count) => {
+const updateMessageCount = async (sessionId, userId, count) => {
   try {
     const { error } = await supabase
       .from('sessions')
       .update({ message_count: count })
-      .eq('id', sessionId);
+      .eq('id', sessionId)
+      .eq('user_id', userId);
 
     if (error) {
       console.error('Error updating message count:', error);
@@ -149,7 +148,7 @@ const updateMessageCount = async (sessionId, count) => {
 };
 
 // Get all sessions for sidebar
-const getAllSessions = async () => {
+const getAllSessions = async (userId) => {
   try {
     const { data: sessions, error } = await supabase
       .from('sessions')
@@ -158,6 +157,7 @@ const getAllSessions = async () => {
         stm_messages (content, created_at),
         ltm_memories (memory_text, created_at)
       `)
+      .eq('user_id', userId)
       .order('updated_at', { ascending: false });
 
     if (error) {
@@ -172,10 +172,6 @@ const getAllSessions = async () => {
       // Sorting to find the "first" content
       const stm = session.stm_messages?.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)) || [];
       const ltm = session.ltm_memories?.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)) || [];
-
-      // Prefer first user message from STM, else first LTM summary
-      // Note: We might want to filter stm by role='user' but we didn't fetch role. 
-      // Let's assume content is enough.
 
       if (stm.length > 0) {
         title = stm[0].content;
@@ -200,23 +196,22 @@ const getAllSessions = async () => {
   }
 };
 
-// Get all LTM memories AND recent STM from other sessions
-const getGlobalContext = async () => {
+// Get all LTM memories AND recent STM from other sessions (User Scoped)
+const getGlobalContext = async (userId) => {
   try {
-    // 1. Fetch all LTM
+    // 1. Fetch all LTM for this user
     const { data: ltm, error: ltmError } = await supabase
       .from('ltm_memories')
-      .select('session_id, memory_text');
+      .select('session_id, memory_text')
+      .eq('user_id', userId);
 
     if (ltmError) throw ltmError;
 
-    // 2. Fetch recent STM (last 10 messages from other sessions)
-    // We can't efficiently filter "other sessions" in one query without a session ID argument, 
-    // but we can filter later. For now, let's fetch ALL recent STM and filter in code.
-    // Or better, just fetch the last 50 messages globally.
+    // 2. Fetch recent STM (last 50 messages from other sessions for this user)
     const { data: stm, error: stmError } = await supabase
       .from('stm_messages')
       .select('session_id, role, content, created_at')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(50);
 

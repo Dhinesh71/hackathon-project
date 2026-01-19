@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Send, Bot, User } from 'lucide-react';
 
 const ChatInterface = ({ messages, onSendMessage, loading }) => {
     const [input, setInput] = useState("");
@@ -21,75 +22,68 @@ const ChatInterface = ({ messages, onSendMessage, loading }) => {
     };
 
     return (
-        <div className="main-chat-area">
-            <header style={{ height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--glass-border)' }}>
-                <h1 className="text-neon" style={{ margin: 0, fontSize: '1.5rem', letterSpacing: '2px' }}>
-                    CONTEXT AI <span className="text-gradient">SYSTEM</span>
+        <div className="flex-1 flex flex-col relative h-full">
+            <header className="h-[80px] flex items-center justify-center border-b border-white/10 shrink-0 bg-gray-900/50 backdrop-blur-md z-10">
+                <h1 className="text-2xl font-bold tracking-widest text-cyan-400 drop-shadow-[0_0_10px_rgba(0,243,255,0.5)]">
+                    CONTEXT AI <span className="bg-gradient-to-r from-cyan-400 to-purple-500 text-transparent bg-clip-text">SYSTEM</span>
                 </h1>
             </header>
 
-            <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                 {messages.length === 0 && (
-                    <div style={{ textAlign: 'center', color: 'var(--text-dim)', marginTop: '20vh' }}>
-                        <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.5 }}>✨</div>
-                        <p>Initialize memory sequence...</p>
-                        <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>System is standing by.</p>
+                    <div className="text-center text-gray-500 mt-[20vh] animate-pulse">
+                        <div className="text-6xl mb-4 opacity-50">✨</div>
+                        <p className="text-lg font-medium">Initialize memory sequence...</p>
+                        <p className="text-sm opacity-70">System is standing by.</p>
                     </div>
                 )}
 
                 {messages.map((msg, idx) => (
-                    <div key={idx} style={{
-                        alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                        maxWidth: '70%',
-                        display: 'flex',
-                        flexDirection: 'column'
-                    }}>
-                        <div style={{
-                            fontSize: '0.7rem',
-                            marginBottom: '4px',
-                            color: 'var(--text-dim)',
-                            textAlign: msg.role === 'user' ? 'right' : 'left',
-                            padding: '0 5px'
-                        }}>
-                            {msg.role === 'user' ? 'YOU' : 'AI CORE'}
+                    <div key={idx} className={`flex flex-col max-w-[70%] ${msg.role === 'user' ? 'self-end items-end' : 'self-start items-start'}`}>
+                        <div className="text-[10px] mb-1.5 text-gray-500 px-1 font-mono uppercase tracking-wider flex items-center gap-1">
+                            {msg.role === 'user' ? (
+                                <><span>YOU</span><User className="w-3 h-3" /></>
+                            ) : (
+                                <><Bot className="w-3 h-3" /><span>AI CORE</span></>
+                            )}
                         </div>
-                        <div className={msg.role === 'user' ? 'msg-user glass-panel' : 'msg-ai glass-panel'} style={{ padding: '12px 18px', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                        <div className={`
+                            px-5 py-3.5 text-sm leading-relaxed rounded-2xl border backdrop-blur-md shadow-lg
+                            ${msg.role === 'user'
+                                ? 'bg-gradient-to-br from-cyan-500/20 to-cyan-500/5 border-cyan-500/30 text-white rounded-br-none'
+                                : 'bg-white/5 border-white/10 text-gray-200 rounded-bl-none'
+                            }
+                        `}>
                             {msg.content}
                         </div>
                     </div>
                 ))}
 
                 {loading && (
-                    <div style={{ alignSelf: 'flex-start', color: 'var(--primary-neon)', fontStyle: 'italic', paddingLeft: '10px' }}>
+                    <div className="self-start text-cyan-400/80 italic text-sm pl-2 flex items-center gap-2 animate-pulse">
+                        <Bot className="w-4 h-4" />
                         Processing datastream...
                     </div>
                 )}
                 <div ref={messagesEndRef} />
             </div>
 
-            <div style={{ padding: '20px', background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(5px)' }}>
-                <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '15px', maxWidth: '800px', margin: '0 auto' }}>
+            <div className="p-5 bg-black/20 backdrop-blur-md border-t border-white/5">
+                <form onSubmit={handleSubmit} className="flex gap-3 max-w-4xl mx-auto">
                     <input
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         placeholder="Enter command or query..."
-                        className="glass-panel"
-                        style={{
-                            flex: 1,
-                            padding: '14px 20px',
-                            color: '#fff',
-                            border: '1px solid var(--glass-border)',
-                            outline: 'none',
-                            fontSize: '1rem'
-                        }}
+                        className="flex-1 bg-gray-800/50 border border-white/10 rounded-xl px-5 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
                     />
                     <button
                         type="submit"
                         disabled={loading}
-                        className="btn-neon"
+                        className="bg-cyan-500/10 border border-cyan-500/50 text-cyan-400 px-6 rounded-xl font-bold tracking-wider hover:bg-cyan-500 hover:text-black hover:shadow-[0_0_20px_rgba(0,243,255,0.4)] disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-cyan-400 transition-all duration-300 flex items-center gap-2"
                     >
-                        SEND
+                        <span>SEND</span>
+                        <Send className="w-4 h-4" />
                     </button>
                 </form>
             </div>

@@ -10,26 +10,24 @@ const shouldTriggerRecall = (message) => {
     return RECALL_KEYWORDS.some(keyword => lower.includes(keyword));
 };
 
-const handleMessage = async (sessionId, userMessage) => {
+const handleMessage = async (sessionId, userMessage, userId) => {
     try {
         // 1. Load session from Supabase
-        const session = await getSession(sessionId);
+        const session = await getSession(sessionId, userId);
 
         // 2. Save user message to STM in Supabase
-        await saveToSTM(sessionId, 'user', userMessage);
+        await saveToSTM(sessionId, userId, 'user', userMessage);
 
         // Add to local session for current request
         session.stm.push({ role: "user", content: userMessage });
         session.messageCount++;
-        await updateMessageCount(sessionId, session.messageCount);
+        await updateMessageCount(sessionId, userId, session.messageCount);
 
         const isRecallNeeded = shouldTriggerRecall(userMessage);
-        let ltmContext = [];
 
         // 3. Determine Context for Prompt
-        // 3. Determine Context for Prompt
         // Fetch global context (LTM + recent STM from other sessions)
-        const globalContext = await getGlobalContext();
+        const globalContext = await getGlobalContext(userId);
 
         // Filter LTM for other sessions
         const backgroundLTM = globalContext.ltm
@@ -78,23 +76,28 @@ INSTRUCTIONS:
         try {
             const result = await model.generateContent(finalPromptContent);
             const response = await result.response;
-            // Fix: logic to avoid candidates error if safety blocks it
             if (response.candidates && response.candidates.length > 0 && response.candidates[0].finishReason !== "STOP") {
                 console.warn("Gemini finish reason:", response.candidates[0].finishReason);
             }
             aiResponseText = response.text();
         } catch (e) {
             console.error("Gemini Error:", e);
-            aiResponseText = `Gemini Error: ${e.message || "Unknown error"}`;
+            if (e.message && e.message.includes("429")) {
+                aiResponseText = "Used up AI quota (Free Tier). Please wait a minute and try again.";
+            } else if (e.message && e.message.includes("403")) {
+                aiResponseText = "API Key Error. Please check backend logs.";
+            } else {
+                aiResponseText = `Gemini Error: ${e.message || "Unknown error"}`;
+            }
         }
 
         // 6. Save AI response to STM in Supabase
-        await saveToSTM(sessionId, 'ai', aiResponseText);
+        await saveToSTM(sessionId, userId, 'ai', aiResponseText);
 
         // Add to local session for current request
         session.stm.push({ role: "ai", content: aiResponseText });
         session.messageCount++;
-        await updateMessageCount(sessionId, session.messageCount);
+        await updateMessageCount(sessionId, userId, session.messageCount);
 
         // 7. Check Summarization Trigger (every 10 messages = 5 user + 5 AI)
         if (session.stm.length >= 10) {
@@ -102,13 +105,13 @@ INSTRUCTIONS:
             const newBullets = await summarizeBatch(session.stm);
             if (newBullets.length > 0) {
                 // Save to Supabase LTM
-                await saveToLTM(sessionId, newBullets);
+                await saveToLTM(sessionId, userId, newBullets);
 
                 // Update local session
                 session.ltm = [...session.ltm, ...newBullets];
 
                 // Clear STM in Supabase and locally
-                await clearSTM(sessionId);
+                await clearSTM(sessionId, userId);
                 session.stm = [];
 
                 console.log(`[Context] ${newBullets.length} memories saved to LTM`);

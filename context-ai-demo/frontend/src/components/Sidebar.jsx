@@ -1,111 +1,42 @@
 import React from 'react';
+import { Plus, MessageSquare } from 'lucide-react';
 
 const Sidebar = ({ sessions, activeSessionId, onSelectSession, onNewChat }) => {
     return (
-        <div style={{
-            width: '260px',
-            height: '100%',
-            backgroundColor: 'rgba(10, 10, 15, 0.95)',
-            borderRight: '1px solid var(--glass-border)',
-            display: 'flex',
-            flexDirection: 'column',
-            flexShrink: 0
-        }}>
+        <div className="w-[260px] h-full bg-gray-900/95 border-r border-white/10 flex flex-col flex-shrink-0 backdrop-blur-sm">
             {/* Header Aligned to 80px */}
-            <div style={{
-                height: '80px',
-                borderBottom: '1px solid var(--glass-border)',
-                display: 'flex',
-                alignItems: 'center',
-                padding: '0 20px',
-                flexShrink: 0
-            }}>
+            <div className="h-[80px] border-b border-white/10 flex items-center px-5 flex-shrink-0">
                 <button
                     onClick={onNewChat}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '10px',
-                        width: '100%',
-                        padding: '10px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid var(--glass-border)',
-                        borderRadius: '8px',
-                        color: 'var(--text-main)',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                        e.currentTarget.style.borderColor = 'var(--primary-neon)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                        e.currentTarget.style.borderColor = 'var(--glass-border)';
-                    }}
+                    className="flex items-center justify-center gap-2 w-full p-2.5 bg-white/5 border border-white/10 rounded-lg text-white/90 text-sm font-medium hover:bg-white/10 hover:border-cyan-400 transition-all duration-200 group"
                 >
-                    <span style={{ fontSize: '18px', lineHeight: 1 }}>+</span>
+                    <Plus className="w-4 h-4 text-white/70 group-hover:text-cyan-400" />
                     New Chat
                 </button>
             </div>
 
             {/* Scrollable List Area */}
-            <div style={{
-                flex: 1,
-                overflowY: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '4px',
-                padding: '20px'
-            }}>
-                <div style={{
-                    fontSize: '12px',
-                    color: 'var(--text-dim)',
-                    marginBottom: '10px',
-                    paddingLeft: '4px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em'
-                }}>
+            <div className="flex-1 overflow-y-auto flex flex-col gap-1 p-5 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                <div className="text-xs text-gray-500 mb-2.5 pl-1 uppercase tracking-wider font-semibold">
                     Recent History
                 </div>
                 {sessions.map(session => (
                     <div
                         key={session.id}
                         onClick={() => onSelectSession(session.id)}
-                        style={{
-                            padding: '10px 12px',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                            color: session.id === activeSessionId ? 'var(--primary-neon)' : 'var(--text-main)',
-                            backgroundColor: session.id === activeSessionId ? 'rgba(0, 243, 255, 0.1)' : 'transparent',
-                            border: session.id === activeSessionId ? '1px solid rgba(0, 243, 255, 0.2)' : '1px solid transparent',
-                            transition: 'all 0.2s ease',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px'
-                        }}
-                        onMouseEnter={(e) => {
-                            if (session.id !== activeSessionId) {
-                                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                        className={`
+                            px-3 py-2.5 rounded-md cursor-pointer text-sm flex flex-col gap-1 transition-all duration-200
+                            ${session.id === activeSessionId
+                                ? 'bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-medium shadow-sm shadow-cyan-900/20'
+                                : 'text-gray-300 border border-transparent hover:bg-white/5'
                             }
-                        }}
-                        onMouseLeave={(e) => {
-                            if (session.id !== activeSessionId) {
-                                e.currentTarget.style.backgroundColor = 'transparent';
-                            }
-                        }}
+                        `}
                     >
-                        <div style={{ fontWeight: session.id === activeSessionId ? '600' : '400', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div className="truncate flex items-center gap-2">
+                            <MessageSquare className={`w-3 h-3 ${session.id === activeSessionId ? 'text-cyan-400' : 'text-gray-500'}`} />
                             {session.title || `Chat ${session.id.slice(0, 8)}...`}
                         </div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-dim)' }}>
+                        <div className="text-[10px] text-gray-500 ml-5">
                             {new Date(session.updated_at).toLocaleString(undefined, {
                                 month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                             })}
@@ -113,7 +44,7 @@ const Sidebar = ({ sessions, activeSessionId, onSelectSession, onNewChat }) => {
                     </div>
                 ))}
                 {sessions.length === 0 && (
-                    <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--text-dim)', fontSize: '13px', fontStyle: 'italic' }}>
+                    <div className="py-5 text-center text-gray-500 text-xs italic">
                         No history yet...
                     </div>
                 )}
