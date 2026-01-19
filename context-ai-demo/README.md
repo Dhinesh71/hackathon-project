@@ -493,29 +493,39 @@ context-ai-demo/
 
 ## 🌐 Deployment
 
-### Deploy to Vercel
+The easiest way to deploy this project is using **Vercel**. Since it's a monorepo (frontend + backend), you should deploy them as **two separate projects**.
 
-**Backend Deployment:**
+### 1. Deploy the Backend (Node.js)
 
-1. Push code to GitHub
-2. Go to [Vercel](https://vercel.com)
-3. Import repository
-4. Set environment variables in Vercel dashboard:
-   - `GEMINI_API_KEY`
-   - `SUPABASE_URL`
-   - `SUPABASE_ANON_KEY`
-   - `PORT` (set to 3000)
-5. Deploy
+1.  **Login to Vercel** and click **"Add New"** → **"Project"**.
+2.  **Import your GitHub repository**.
+3.  In the configuration:
+    *   **Project Name**: `context-ai-backend`
+    *   **Root Directory**: Select **`backend`**.
+    *   **Framework Preset**: Select **Other**.
+    *   **Build & Development Settings**: Keep defaults (Vercel will see `npm start`).
+4.  **Environment Variables**: Add the following:
+    *   `GEMINI_API_KEY`: Your Google Gemini key.
+    *   `SUPABASE_URL`: Your Supabase URL.
+    *   `SUPABASE_ANON_KEY`: Your Supabase key.
+5.  Click **Deploy**.
+6.  **Copy the assigned URL** (e.g., `https://context-ai-backend.vercel.app`).
 
-**Frontend Deployment:**
+### 2. Deploy the Frontend (React/Vite)
 
-1. Update `frontend/.env`:
-   ```bash
-   VITE_API_URL=https://your-backend.vercel.app
-   ```
-2. Push changes to GitHub
-3. Deploy frontend to Vercel
-4. Update backend CORS to allow frontend domain
+1.  **Add New Project** again in Vercel.
+2.  **Import the same GitHub repository**.
+3.  In the configuration:
+    *   **Project Name**: `context-ai-frontend`
+    *   **Root Directory**: Select **`frontend`**.
+    *   **Framework Preset**: **Vite**.
+4.  **Environment Variables**: Add the following:
+    *   `VITE_API_URL`: Paste the **Backend URL** you copied in the previous step.
+5.  Click **Deploy**.
+
+### 3. Final Step: Handshake (CORS)
+
+If you encounter CORS errors (red text in browser console), update `backend/server.js` to specifically allow your frontend domain, or keep it as `app.use(cors())` for wide access.
 
 ---
 
