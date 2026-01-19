@@ -19,7 +19,8 @@ function App() {
     setMessages(prev => [...prev, userMsg]);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/chat`, {
+      const baseUrl = import.meta.env.VITE_API_URL.replace(/\/$/, "");
+      const response = await fetch(`${baseUrl}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text, sessionId: SESSION_ID })
