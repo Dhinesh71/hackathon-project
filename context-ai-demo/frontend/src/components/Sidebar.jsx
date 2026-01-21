@@ -1,17 +1,25 @@
 import React from 'react';
 import { Plus, MessageSquare } from 'lucide-react';
 
-const Sidebar = ({ sessions, activeSessionId, onSelectSession, onNewChat }) => {
+const Sidebar = ({ sessions, activeSessionId, onSelectSession, onNewChat, onClose }) => {
     return (
-        <div className="w-[260px] h-full bg-gray-900/95 border-r border-white/10 flex flex-col flex-shrink-0 backdrop-blur-sm">
+        <div className="w-full lg:w-[260px] h-full bg-gray-900 border-r border-white/10 flex flex-col flex-shrink-0 backdrop-blur-md">
             {/* Header Aligned to 80px */}
-            <div className="h-[80px] border-b border-white/10 flex items-center px-5 flex-shrink-0">
+            <div className="h-[80px] border-b border-white/10 flex items-center px-4 gap-3 flex-shrink-0">
                 <button
                     onClick={onNewChat}
-                    className="flex items-center justify-center gap-2 w-full p-2.5 bg-white/5 border border-white/10 rounded-lg text-white/90 text-sm font-medium hover:bg-white/10 hover:border-cyan-400 transition-all duration-200 group"
+                    className="flex-1 flex items-center justify-center gap-2 p-2.5 bg-white/5 border border-white/10 rounded-lg text-white/90 text-sm font-medium hover:bg-white/10 hover:border-cyan-400 transition-all duration-200 group"
                 >
                     <Plus className="w-4 h-4 text-white/70 group-hover:text-cyan-400" />
-                    New Chat
+                    <span className="truncate">New Chat</span>
+                </button>
+
+                {/* Mobile Close Button */}
+                <button
+                    onClick={onClose}
+                    className="lg:hidden p-2 text-gray-400 hover:text-white"
+                >
+                    <Plus className="w-6 h-6 rotate-45" />
                 </button>
             </div>
 
