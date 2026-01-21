@@ -1,6 +1,6 @@
 const { getSession, saveToSTM, saveToLTM, clearSTM, updateMessageCount, getGlobalContext } = require('./memoryStore');
 const { summarizeBatch } = require('./summarizer');
-const model = require('./geminiClient');
+const groq = require('./groqClient');
 
 // Recall triggers
 const RECALL_KEYWORDS = ["earlier", "before", "last time", "you said", "remember", "what did we discuss"];
@@ -71,23 +71,34 @@ INSTRUCTIONS:
 - Use "CURRENT SESSION CONTEXT" and "RECENT MESSAGES" to maintain continuity in the current conversation.
 - Be concise, friendly, and direct.`;
 
-        // 5. Call Gemini for Answer
+        // 5. Call Groq for Answer
         let aiResponseText = "";
         try {
-            const result = await model.generateContent(finalPromptContent);
-            const response = await result.response;
-            if (response.candidates && response.candidates.length > 0 && response.candidates[0].finishReason !== "STOP") {
-                console.warn("Gemini finish reason:", response.candidates[0].finishReason);
-            }
-            aiResponseText = response.text();
+            const chatCompletion = await groq.chat.completions.create({
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are an intelligent AI assistant with memory management capabilities."
+                    },
+                    {
+                        role: "user",
+                        content: finalPromptContent
+                    }
+                ],
+                model: "llama-3.3-70b-versatile",
+                temperature: 0.7,
+                max_tokens: 2048,
+            });
+
+            aiResponseText = chatCompletion.choices[0]?.message?.content || "No response generated.";
         } catch (e) {
-            console.error("Gemini Error:", e);
+            console.error("Groq Error:", e);
             if (e.message && e.message.includes("429")) {
-                aiResponseText = "Used up AI quota (Free Tier). Please wait a minute and try again.";
+                aiResponseText = "Used up AI quota. Please wait a minute and try again.";
             } else if (e.message && e.message.includes("403")) {
                 aiResponseText = "API Key Error. Please check backend logs.";
             } else {
-                aiResponseText = `Gemini Error: ${e.message || "Unknown error"}`;
+                aiResponseText = `Groq Error: ${e.message || "Unknown error"}`;
             }
         }
 

@@ -1,31 +1,24 @@
 import { useState, useEffect } from 'react';
 import ChatInterface from '../components/ChatInterface';
 import Sidebar from '../components/Sidebar';
-import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
     const [sessions, setSessions] = useState([]);
     const [activeSessionId, setActiveSessionId] = useState(null);
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(false);
-    const { signOut, session } = useAuth();
-    const navigate = useNavigate();
 
     const baseUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, "") : "http://localhost:3000";
 
-    // Helper to get headers with Auth
+    // Helper to get headers
     const getHeaders = () => ({
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token}`
+        'Content-Type': 'application/json'
     });
 
     // 1. Fetch Sessions on Load
     useEffect(() => {
-        if (session) {
-            fetchSessions();
-        }
-    }, [session]);
+        fetchSessions();
+    }, []);
 
     const fetchSessions = async () => {
         try {
@@ -51,7 +44,7 @@ export default function Dashboard() {
     };
 
     const createNewSession = () => {
-        const newId = "session-" + Date.now() + "-" + Math.random().toString(36).substr(2, 5);
+        const newId = crypto.randomUUID();
         setActiveSessionId(newId);
         setMessages([]);
         // Don't add to sessions list yet until first message sent
@@ -78,7 +71,7 @@ export default function Dashboard() {
     const handleSendMessage = async (text) => {
         let currentSessionId = activeSessionId;
         if (!currentSessionId) {
-            currentSessionId = "session-" + Date.now() + "-" + Math.random().toString(36).substr(2, 5);
+            currentSessionId = crypto.randomUUID();
             setActiveSessionId(currentSessionId);
         }
 
@@ -116,11 +109,6 @@ export default function Dashboard() {
         }
     };
 
-    const handleLogout = async () => {
-        await signOut();
-        navigate('/login');
-    };
-
     return (
         <div className="flex w-full h-screen font-sans bg-gray-900 text-white overflow-hidden">
             <Sidebar
@@ -131,16 +119,6 @@ export default function Dashboard() {
             />
 
             <div className="flex-1 flex flex-col relative w-full h-full">
-                {/* Logout Button (Absolute top-right for simplicity or part of header) */}
-                <div className="absolute top-4 right-4 z-50">
-                    <button
-                        onClick={handleLogout}
-                        className="bg-red-600 hover:bg-red-700 text-xs text-white px-3 py-1 rounded shadow"
-                    >
-                        Logout
-                    </button>
-                </div>
-
                 <ChatInterface
                     messages={messages}
                     onSendMessage={handleSendMessage}

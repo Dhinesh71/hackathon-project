@@ -12,7 +12,7 @@ Load Context Sources:
   |
 Build System Prompt (Inject ALL loaded context)
   |
-AI generates response (Gemini 2.5 Flash)
+AI generates response (Groq - Llama 3.3 70B)
   |
 Store AI response in Short-Term Memory (STM) database
   |

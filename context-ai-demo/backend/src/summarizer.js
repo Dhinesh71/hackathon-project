@@ -1,4 +1,4 @@
-const model = require('./geminiClient');
+const groq = require('./groqClient');
 
 const SYSTEM_PROMPT = `Summarize the following conversation.
 Extract ONLY:
@@ -13,10 +13,23 @@ const summarizeBatch = async (messages) => {
     try {
         const conversationText = messages.map(m => `${m.role}: ${m.content}`).join('\n');
 
-        const prompt = SYSTEM_PROMPT + "\n\nConversation to summarize:\n" + conversationText;
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const summary = response.text();
+        const chatCompletion = await groq.chat.completions.create({
+            messages: [
+                {
+                    role: "system",
+                    content: SYSTEM_PROMPT
+                },
+                {
+                    role: "user",
+                    content: "Conversation to summarize:\n" + conversationText
+                }
+            ],
+            model: "llama-3.3-70b-versatile",
+            temperature: 0.5,
+            max_tokens: 1024,
+        });
+
+        const summary = chatCompletion.choices[0]?.message?.content || "";
 
         // Parse into array of strings (bullet points)
         const bullets = summary.split('\n')

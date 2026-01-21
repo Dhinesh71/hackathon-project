@@ -1,9 +1,0 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-require("dotenv").config();
-
-// Access your API key as an environment variable
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-09-2025" });
-
-module.exports = model;
